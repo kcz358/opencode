@@ -501,6 +501,47 @@ Earlier work
     ])
   })
 
+  test("uses materialized audio and video data as provider media", () => {
+    const video = path.resolve("/project/clip.mp4")
+    const messages = toLLMMessages(
+      [
+        SessionMessage.User.make({
+          id: id("user-audio-video"),
+          type: "user",
+          text: "",
+          files: [
+            FileAttachment.make({
+              data: Base64.make("AAECAw=="),
+              mime: "audio/wav",
+              source: { type: "inline" },
+              name: "audio.wav",
+            }),
+            FileAttachment.make({
+              data: Base64.make("BAUGBw=="),
+              mime: "video/mp4",
+              source: { type: "uri", uri: pathToFileURL(video).href },
+              name: "clip.mp4",
+            }),
+          ],
+          time: { created },
+        }),
+      ],
+      model,
+    )
+
+    expect(messages).toEqual([
+      Message.make({
+        id: id("user-audio-video"),
+        role: "user",
+        content: [
+          { type: "media", media: Media.base64("AAECAw==", "audio/wav"), filename: "audio.wav" },
+          { type: "text", text: `Attached file: ${video}` },
+          { type: "media", media: Media.base64("BAUGBw==", "video/mp4"), filename: "clip.mp4" },
+        ],
+      }),
+    ])
+  })
+
   test("exposes admitted local image source paths before provider media", () => {
     const data = Base64.make("AAECAw==")
     const location = path.resolve("/project/IMG_3480.JPG")
